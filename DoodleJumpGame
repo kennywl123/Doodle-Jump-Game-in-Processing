@@ -1,0 +1,238 @@
+final int BGCOLOR = #f9f0e7; // Grid Background Color
+final int LINECOLOR = #f0d8c1; // Grid Lines Color
+final int GREENCOLOR = #4aba00; // Color Code for Green Color
+final int BLUECOLOR = #3cbfd3; // Color Code for Blue Color
+final int BROWNCOLOR = #8e5c22; // Color Code for Brown Color
+final int ORANGECOLOR = #fbb311; // Color Code for Orange Color
+final String[] TYPES = {"Green", "Green", "Green", "Green", "Green", "Blue", "Blue", "Blue", "Brown", "Orange"}; // 50% Green, 30% Blue, 10% Brown, and 10% Orange
+final float PLATFORM_WIDTH = 50; // Platform width value
+final float PLATFORM_HEIGHT = 10; // Platform height value
+final int NUM_PLATFORMS = 1000; //1000 platforms generate for the game
+final float MARGIN = 50; // Margin to draw platforms in range
+final float G = 9.8; // The value for gravity that affects the doodle speed
+final float DOODLE_HEIGHT = 50;
+final float DOODLE_WIDTH = 50;
+final int DOODLE_XDIIFF = 5; // the change in doodle x when moving left or right
+PImage doodleLeft, doodleRight; // Image variable to store the doodle Picture
+boolean lookingRight;
+float doodleX, doodleY;
+float doodleSpeed;
+float scrollSpeed;
+boolean gameOver;
+String message;
+boolean[] platformExistence;
+float[] platformX;
+float[] platformY;
+int[] platformType;
+float[] platformSpeed;
+int points;
+
+void setup() {
+  size(400, 700);
+  doodleLeft = loadImage("b.png"); //loading the doodle looking left image
+  doodleRight = loadImage("a.png"); //loading the doodle looking right image
+  // start the game for the first time
+  startGame();
+}
+void draw() {
+  // draw background first every frame
+  gameBackground();
+  // draw the platforms that exists and are in the range of the screen
+  drawPlatform();
+  //change doodle's x and y coordinates in the direction that it needs to move
+  moveDoodle();
+  // draw doodle
+  drawDoodle();
+  // move the blue platforms
+  movePlatforms();
+}
+
+void drawDoodle() { // draw doodle according to wheher it is looking towards left or right
+  if (lookingRight)
+    image(doodleRight, doodleX, doodleY, DOODLE_WIDTH, DOODLE_HEIGHT);
+  else
+    image(doodleLeft, doodleX, doodleY, DOODLE_WIDTH, DOODLE_HEIGHT);
+}
+void gameBackground() {
+  background(BGCOLOR);
+  stroke(LINECOLOR);
+  for (int i = 0; i <= width; i += 10) {
+    line(i, 0, i, height);
+  }
+  for (int j = 0; j <= height; j += 20) {
+    line(0, j, width, j);
+  }
+}
+
+void startGame() { // initialize the doodle properties and create levels
+  // doodle will be looking right initially
+  lookingRight = true;
+  // set gameover boolean to false at game start
+  gameOver = false;
+  //points
+  points = 0;
+  // random place for doodle starting x position
+  doodleX = random(DOODLE_WIDTH, width - DOODLE_WIDTH);
+  // random place for doodle starting y position
+  doodleY = random(height/2, height - DOODLE_HEIGHT);
+  // random float value between 5 to 10 for doodle starting speed
+  doodleSpeed = random(5, 10);
+  // generates 1000 platforms for the whole game
+  generatePlatforms();
+  // draw background of the game
+  gameBackground();
+  // draw platforms
+  drawPlatform();
+}
+
+void generatePlatforms() {
+  platformExistence = new boolean[NUM_PLATFORMS];
+  platformX = new float[NUM_PLATFORMS];
+  platformY = new float[NUM_PLATFORMS];
+  platformType = new int[NUM_PLATFORMS];
+  platformSpeed = new float[NUM_PLATFORMS];
+  for (int i = 0; i < NUM_PLATFORMS; i++) {
+    platformExistence[i] = true;
+    platformX[i] = random(PLATFORM_WIDTH, width - PLATFORM_WIDTH);
+    float minPlatformY = height;
+    float maxPlatformY = -height * (MARGIN * 3 + PLATFORM_HEIGHT);
+    platformY[i] = minPlatformY + (maxPlatformY - minPlatformY) * i / (NUM_PLATFORMS - 1);
+    platformType[i] = int(random(0, 10));
+    platformSpeed[i] = random(1, 2);
+  }
+}
+
+void drawPlatform() {
+  for (int i = 0; i < NUM_PLATFORMS; i++) {
+    if (platformExistence[i]) {
+      if (platformType[i] <= 4) { //Green
+        fill(GREENCOLOR);
+      } else if (platformType[i] >= 5 && platformType[i] <= 7) { //Blue
+        fill(BLUECOLOR);
+      } else if (platformType[i] == 8) { //Brown
+        fill(BROWNCOLOR);
+      } else if (platformType[i] == 9) { //Orange
+        fill(ORANGECOLOR);
+      }
+      rect(platformX[i], platformY[i], PLATFORM_WIDTH, PLATFORM_HEIGHT, 20);
+    }
+  }
+}
+
+void movePlatforms() {
+  for (int i = 0; i < NUM_PLATFORMS; i++) {
+    if (platformType[i] >= 5 && platformType[i] <= 7) {
+      platformX[i] += platformSpeed[i];
+
+      // Check if the platform went off the screen
+      if (platformX[i] + PLATFORM_WIDTH > width || 0 > platformX[i]) {
+        platformSpeed[i] *= -1;
+      }
+    }
+  }
+}
+
+void moveDoodle() {
+  if (keyPressed) {
+    if (key == 'a' || key == 'A') {//Move to the left
+      if (doodleX - DOODLE_XDIIFF >= 0) { // Check if the doodle is within the canvas
+        doodleX -= DOODLE_XDIIFF;
+      } else {
+        doodleX = width - DOODLE_WIDTH; // Set doodleX
+      }
+      lookingRight = false;
+    } else if (key == 'd' || key == 'D') {//Move to the right
+      if (doodleX + DOODLE_XDIIFF <= width - DOODLE_WIDTH) { // Check if the doodle is within the canvas
+        doodleX += DOODLE_XDIIFF;
+      } else {
+        doodleX = 0; // Set doodleX
+      }
+      lookingRight = true;
+    }
+  }
+  doodleSpeed -= G/55; // Jumping height
+  doodleY -= doodleSpeed;
+  // Check if the doodle is below the screen
+  if (doodleY> height) {
+    gameOver = true;
+    for (int i = 0; i < NUM_PLATFORMS; i++) {
+      if (platformY[i] > height) {
+        platformExistence[i] = false;
+      }
+      platformY[i] -= G;
+    }
+  }
+  displayGameOver();
+  checkCollision();
+  scroll();
+}
+
+void scroll() {
+  for (int i = 0; i < NUM_PLATFORMS; i++) {
+    platformY[i] += scrollSpeed;
+  }
+  if (scrollSpeed >= 0) {
+    scrollSpeed -= scrollSpeed/55; // Reduce scroll speed
+  }
+}
+
+void checkCollision() {
+  for (int i = 0; i < NUM_PLATFORMS; i++) {
+    if (platformExistence[i]) {
+      if (platformY[i] + PLATFORM_HEIGHT >= doodleY && platformY[i] <= doodleY + DOODLE_HEIGHT && doodleX +
+        DOODLE_WIDTH >= platformX[i] && doodleX <= platformX[i] + PLATFORM_WIDTH) {
+        if (platformType[i] <= 4) { //Green
+          doodleSpeed = 5 + random(0, 3) * (doodleY - height/2)/(height/2);
+          scrollSpeed = 1.5 * doodleSpeed;
+          if(platformY[i] <= doodleY && platformY[i] <= doodleY + DOODLE_HEIGHT && doodleX +
+        DOODLE_WIDTH >= platformX[i] && doodleX <= platformX[i] + PLATFORM_WIDTH){
+            points ++;
+          }
+        } else if (platformType[i] >= 5 && platformType[i] <= 7) { //Blue
+          doodleSpeed = 5 + random(0, 2) * (doodleY - height/2)/(height/2);
+          scrollSpeed = 1.5 * doodleSpeed;
+          if(platformY[i] <= doodleY && platformY[i] <= doodleY + DOODLE_HEIGHT && doodleX +
+        DOODLE_WIDTH >= platformX[i] && doodleX <= platformX[i] + PLATFORM_WIDTH){
+            points ++;
+          }          
+        } else if (platformType[i] == 8) { //Brown
+          platformExistence[i] = false;
+        } else if (platformType[i] == 9) { //Orange
+          doodleSpeed = 10 + random(0, 2) * (doodleY - height/2)/(height/2);
+          scrollSpeed = 3 * doodleSpeed;
+          if(platformY[i] <= doodleY && platformY[i] <= doodleY + DOODLE_HEIGHT && doodleX +
+        DOODLE_WIDTH >= platformX[i] && doodleX <= platformX[i] + PLATFORM_WIDTH){
+            points ++;
+          }          
+        }
+      }
+    }
+  }
+}
+
+void mousePressed() {
+  if (gameOver == true && mouseX >= width/2 - width/4 && mouseX <= width/2 - width/4 +
+    width/2 && mouseY >= height/2 + height/100 && mouseY <= height/2 + height/100 + height/12) {
+    gameOver = false;
+    startGame(); //Restart game
+  }
+}
+
+void displayGameOver() {
+  fill(BROWNCOLOR);
+  textSize(height/15);
+  if (gameOver) {
+    message = "GAMEOVER!";
+    text(message, width/2 - textWidth(message)/2, height/2);
+    fill(255, 0, 0);
+    rect(width/2 - width/4, height/2 + height/100, width/2, height/12);
+    fill(255);
+    textSize(height/20);
+    String message1 = "Play Again!";
+    text(message1, width/2 - textWidth(message1)/2, height/2 + height/15);
+  }
+}
+
+void restartGame() {
+  startGame(); //Set values to default
+}
